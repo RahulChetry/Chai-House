@@ -1,0 +1,15 @@
+<div class="d-flex justify-content-between align-items-center mb-3 pb-2" style="border-bottom:1px solid #e8d5b7">
+  <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle">
+    <i class="bi bi-list"></i>
+  </button>
+  <span class="text-muted small">
+    <i class="bi bi-calendar3 me-1"></i>
+    <span id="currentDate"></span>
+  </span>
+  <a href="{{ url_for('sales.add_sale') }}" class="btn btn-warning btn-sm">
+    <i class="bi bi-plus-circle me-1"></i>Add Sale
+  </a>
+</div>
+<script>
+  document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric'});
+</script>

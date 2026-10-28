@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Weekly Report – Chai House AI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-calendar-week me-2 text-primary"></i>Weekly Report — {{ report.start_date }} to {{ report.end_date }}</h2>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Total Revenue</div><div class="fs-3 fw-bold text-success">₹{{ "%.2f"|format(report.revenue) }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Cups Sold</div><div class="fs-3 fw-bold text-primary">{{ report.cups }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Gross Profit</div><div class="fs-3 fw-bold text-info">₹{{ "%.2f"|format(report.profit) }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Transactions</div><div class="fs-3 fw-bold text-secondary">{{ report.transactions }}</div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-8">
+    <div class="card p-3">
+      <h6 class="mb-3">Daily Revenue This Week</h6>
+      <canvas id="weeklyChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card p-3">
+      <h6 class="mb-3">By Product</h6>
+      {% for p in report.by_product %}
+      <div class="d-flex justify-content-between mb-1"><span>{{ p.name }}</span><span class="fw-semibold">₹{{ "%.0f"|format(p.revenue) }}</span></div>
+      <div class="progress mb-2" style="height:6px">
+        <div class="progress-bar bg-warning" style="width:{{ (p.revenue / report.revenue * 100) if report.revenue > 0 else 0 }}%"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const weekly = {{ report.daily_breakdown | tojson | safe }};
+new Chart(document.getElementById('weeklyChart'), {
+  type: 'bar',
+  data: {
+    labels: weekly.map(d => d.date),
+    datasets: [{ label: 'Revenue (₹)', data: weekly.map(d => d.revenue), backgroundColor: '#C8A96E', borderRadius: 4 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+</script>
+{% endblock %}

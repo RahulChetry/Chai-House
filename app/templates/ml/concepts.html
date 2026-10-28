@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+{% block title %}ML Concepts – Chai House AI{% endblock %}
+{% block content %}
+<h2 class="mb-1"><i class="bi bi-book me-2 text-warning"></i>ML Concepts — Study Guide</h2>
+<p class="text-muted mb-4">All 3 syllabus modules explained with simple language and Chai House examples.</p>
+
+<ul class="nav nav-tabs mb-4" id="conceptTabs" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#mod1">📊 Module 1: Model Evaluation</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mod2">📈 Module 2: Regression</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mod3">🧠 Module 3: SVMs</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#mapping">📋 Syllabus Mapping</button></li>
+</ul>
+
+<div class="tab-content">
+
+<!-- MODULE 1 -->
+<div class="tab-pane fade show active" id="mod1">
+  <div class="accordion" id="acc1">
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c1_1">Model Selection</button></h2>
+      <div id="c1_1" class="accordion-collapse collapse show" data-bs-parent="#acc1"><div class="accordion-body">
+        <p><strong>What it is:</strong> Choosing the best algorithm for your problem — like choosing between a simple recipe and a complex one.</p>
+        <p><strong>Chai House Example:</strong> Should we use Simple Linear Regression (predict tomorrow's Regular Tea sales from yesterday's trend) or SVR (using many features like day of week, lag values)? We compare them on <em>test</em> data to decide.</p>
+        <p><strong>How we do it:</strong> See the <a href="{{ url_for('ml_comparison.comparison_dashboard') }}">Model Comparison</a> page — all 6 regression models are evaluated side by side.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c1_2">Overfitting & Underfitting</button></h2>
+      <div id="c1_2" class="accordion-collapse collapse" data-bs-parent="#acc1"><div class="accordion-body">
+        <p><strong>Overfitting:</strong> The model memorizes training data perfectly but fails on new data. Like a waiter who remembers only last Tuesday's exact orders — useless for today.</p>
+        <p><strong>Underfitting:</strong> The model is too simple to capture patterns. Like predicting "same sales every day" — ignores weekends, seasons, etc.</p>
+        <p><strong>Chai House Example:</strong> Polynomial Regression (degree=3) shows this! On our comparison table, its Test MAE spikes to ~35 cups while Train MAE is low — a classic overfitting signature. Compare to Ridge/Lasso which generalize better.</p>
+        <div class="bg-light rounded p-2 mt-2"><code>Overfit: Train MAE ≈ 1, Test MAE ≈ 35 ← BAD<br>Good fit: Train MAE ≈ 3, Test MAE ≈ 3 ← GOOD</code></div>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c1_3">Bias-Variance Tradeoff</button></h2>
+      <div id="c1_3" class="accordion-collapse collapse" data-bs-parent="#acc1"><div class="accordion-body">
+        <p><strong>Bias:</strong> Error from wrong assumptions (underfitting). High bias = consistently wrong.</p>
+        <p><strong>Variance:</strong> Error from sensitivity to training data (overfitting). High variance = right on training, wrong elsewhere.</p>
+        <p><strong>Total Error = Bias² + Variance + Irreducible Noise</strong></p>
+        <p><strong>Chai House Example:</strong> Simple Linear Regression has high bias (assumes demand grows linearly). Polynomial degree=3 has high variance (wiggles to fit every training point). Ridge/SVR balances both.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c1_4">Regularization & Hyperparameters</button></h2>
+      <div id="c1_4" class="accordion-collapse collapse" data-bs-parent="#acc1"><div class="accordion-body">
+        <p><strong>Regularization:</strong> A penalty added to the model to prevent large coefficients (overfitting). Like adding a "budget limit" on how complex the model can be.</p>
+        <p><strong>Hyperparameters:</strong> Settings you choose before training. <code>alpha</code> in Ridge/Lasso, <code>C</code> and <code>kernel</code> in SVM are hyperparameters.</p>
+        <p><strong>Chai House Example:</strong> Ridge regression with alpha=100 says "keep coefficients small" — good for our small dataset. We tune alpha using GridSearchCV and pick the best value from [0.01, 0.1, 1, 10, 100].</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c1_5">Cross-Validation</button></h2>
+      <div id="c1_5" class="accordion-collapse collapse" data-bs-parent="#acc1"><div class="accordion-body">
+        <p><strong>What it is:</strong> Instead of one train/test split, we split data K times and average the results. Gives a more reliable estimate of model performance.</p>
+        <p><strong>TimeSeriesSplit:</strong> For sales data, we CANNOT randomly shuffle — future data would leak into past. TimeSeriesSplit always trains on past data and tests on future data.</p>
+        <p><strong>Chai House Example:</strong> We use <code>TimeSeriesSplit(n_splits=5)</code>. Fold 1 trains on days 1–72, tests on 73–90. Fold 5 trains on days 1–360, tests on 361–450.</p>
+        <div class="bg-light rounded p-2 mt-2"><code>CV MAE = mean([fold1_mae, fold2_mae, ..., fold5_mae])</code></div>
+      </div></div>
+    </div>
+
+  </div>
+</div><!-- /mod1 -->
+
+<!-- MODULE 2 -->
+<div class="tab-pane fade" id="mod2">
+  <div class="accordion" id="acc2">
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c2_1">Simple Linear Regression (SLR)</button></h2>
+      <div id="c2_1" class="accordion-collapse collapse show" data-bs-parent="#acc2"><div class="accordion-body">
+        <p><strong>Formula:</strong> <code>y = β₀ + β₁x + ε</code></p>
+        <p><strong>Chai House:</strong> Predict tomorrow's Regular Tea cups (y) from 7-day rolling average (x). One predictor, one line.</p>
+        <p><strong>Coefficient Estimation:</strong> We minimize Sum of Squared Residuals using Ordinary Least Squares (OLS): <code>β = (XᵀX)⁻¹Xᵀy</code></p>
+        <p><strong>Assumption check:</strong> Linearity, independence, homoscedasticity, normality of residuals.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2_2">Multiple Linear Regression (MLR)</button></h2>
+      <div id="c2_2" class="accordion-collapse collapse" data-bs-parent="#acc2"><div class="accordion-body">
+        <p><strong>Formula:</strong> <code>y = β₀ + β₁x₁ + β₂x₂ + ... + βₙxₙ + ε</code></p>
+        <p><strong>Chai House:</strong> Predict cups sold using ALL features: day_of_week, month, is_weekend, lag_1, lag_7, rolling_7_mean, etc.</p>
+        <p><strong>Matrix form:</strong> <code>y = Xβ + ε</code> where X is the feature matrix, β is the coefficient vector.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2_3">Polynomial Regression</button></h2>
+      <div id="c2_3" class="accordion-collapse collapse" data-bs-parent="#acc2"><div class="accordion-body">
+        <p><strong>What it is:</strong> Add polynomial terms (x², x³) to capture non-linear patterns.</p>
+        <p><strong>Chai House:</strong> Sales might dip in the middle of the month — a curve fits better than a line. Degree=2 adds x² terms. We compare degree=2 vs degree=3.</p>
+        <p><strong>Warning:</strong> Degree=3 massively overfits our dataset — Test MAE = 35 vs Train MAE ≈ 2. This is shown on the <a href="{{ url_for('ml_comparison.comparison_dashboard') }}">Model Comparison</a> page.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2_4">Ridge Regression (L2)</button></h2>
+      <div id="c2_4" class="accordion-collapse collapse" data-bs-parent="#acc2"><div class="accordion-body">
+        <p><strong>Formula:</strong> <code>Loss = RSS + α × Σβᵢ²</code></p>
+        <p><strong>Effect:</strong> Shrinks coefficients toward zero but never to exactly zero. Good when all features are relevant.</p>
+        <p><strong>Geometric intuition:</strong> The L2 penalty creates a circular constraint in coefficient space. OLS solution intersects this circle at a point with smaller coefficients.</p>
+        <p><strong>Chai House:</strong> Ridge with alpha tuned via GridSearchCV gives Test MAE ≈ 2.64 — very competitive with SVR.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c2_5">Lasso Regression (L1)</button></h2>
+      <div id="c2_5" class="accordion-collapse collapse" data-bs-parent="#acc2"><div class="accordion-body">
+        <p><strong>Formula:</strong> <code>Loss = RSS + α × Σ|βᵢ|</code></p>
+        <p><strong>Effect:</strong> Can shrink coefficients to EXACTLY zero → automatic feature selection!</p>
+        <p><strong>Geometric intuition:</strong> L1 penalty creates a diamond-shaped constraint. The corner of the diamond is likely to intersect the OLS ellipsoid, setting some β = 0.</p>
+        <p><strong>Chai House:</strong> Lasso may zero out less-important features like day_of_month, keeping only the most predictive ones.</p>
+      </div></div>
+    </div>
+
+  </div>
+</div><!-- /mod2 -->
+
+<!-- MODULE 3 -->
+<div class="tab-pane fade" id="mod3">
+  <div class="accordion" id="acc3">
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#c3_1">SVM Fundamentals & Hyperplane</button></h2>
+      <div id="c3_1" class="accordion-collapse collapse show" data-bs-parent="#acc3"><div class="accordion-body">
+        <p><strong>Goal:</strong> Find a line/plane that separates classes with the MAXIMUM margin.</p>
+        <p><strong>2D hyperplane:</strong> A line w₁x₁ + w₂x₂ + b = 0</p>
+        <p><strong>3D hyperplane:</strong> A plane w₁x₁ + w₂x₂ + w₃x₃ + b = 0</p>
+        <p><strong>Chai House:</strong> We classify each day's sales as Low/Medium/High demand. SVM finds the boundary that best separates these classes in feature space (day of week, rolling average, etc.).</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3_2">Maximal Margin Classifier & Soft Margin</button></h2>
+      <div id="c3_2" class="accordion-collapse collapse" data-bs-parent="#acc3"><div class="accordion-body">
+        <p><strong>Hard margin SVM:</strong> No points allowed inside the margin. Only works if data is linearly separable.</p>
+        <p><strong>Soft margin (C parameter):</strong> Allows some points to violate the margin. C controls this:</p>
+        <ul>
+          <li>Large C → narrow margin, fewer violations (may overfit)</li>
+          <li>Small C → wide margin, more violations allowed (may underfit)</li>
+        </ul>
+        <p><strong>Slack variables (ξ):</strong> Each misclassified point gets a slack variable ξᵢ ≥ 0 measuring how far it violates the margin.</p>
+        <p><strong>Objective:</strong> <code>Minimize ½‖w‖² + C × Σξᵢ</code> subject to yᵢ(wᵀxᵢ + b) ≥ 1 − ξᵢ</p>
+        <p><strong>Chai House:</strong> Our SVM uses C=100 (tight margin, precise classification). Found by GridSearchCV. Accuracy = 77.1% on test data.</p>
+      </div></div>
+    </div>
+
+    <div class="accordion-item">
+      <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c3_3">SVM Evaluation on Chai House Data</button></h2>
+      <div id="c3_3" class="accordion-collapse collapse" data-bs-parent="#acc3"><div class="accordion-body">
+        <p><strong>Our results (from actual training):</strong></p>
+        <ul>
+          <li>Accuracy: 77.1%</li>
+          <li>Precision: 78.4%, Recall: 77.1%, F1: 76.9%</li>
+          <li>Best kernel: linear (with C=100)</li>
+          <li>Demand thresholds: Low ≤ 15 cups | Medium 15–22 | High > 22</li>
+        </ul>
+        <p><strong>Support Vector Regression (SVR):</strong> Extends SVM to regression. Instead of a margin, SVR tries to fit as many points within an ε-tube as possible.</p>
+        <p>SVR with rbf/linear kernel and tuned C, epsilon achieves <strong>MAE ≈ 2.59 cups</strong> — the best regression result in our comparison.</p>
+        <a href="{{ url_for('ml_comparison.comparison_dashboard') }}" class="btn btn-sm btn-outline-warning">View Full Results</a>
+      </div></div>
+    </div>
+
+  </div>
+</div><!-- /mod3 -->
+
+<!-- SYLLABUS MAPPING -->
+<div class="tab-pane fade" id="mapping">
+  <div class="card p-4">
+    <h5 class="mb-3">Syllabus Topic → Implementation Mapping</h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-sm">
+        <thead class="table-warning"><tr><th>Syllabus Topic</th><th>Where Implemented</th><th>File / Page</th></tr></thead>
+        <tbody>
+          <tr><td>Model Selection</td><td>6 regression models compared by test MAE</td><td><a href="{{ url_for('ml_comparison.comparison_dashboard') }}">ML Comparison page</a> / trainer.py</td></tr>
+          <tr><td>Overfitting / Underfitting</td><td>Poly degree=3 shows overfitting (high test MAE)</td><td>Model Comparison table</td></tr>
+          <tr><td>Bias-Variance Tradeoff</td><td>Demonstrated by comparing Simple LR vs Poly vs Ridge</td><td>Model Comparison table + this page</td></tr>
+          <tr><td>Regularization</td><td>Ridge (L2) and Lasso (L1) implemented with alpha tuning</td><td>trainer.py lines 200–280</td></tr>
+          <tr><td>Hyperparameter Tuning</td><td>GridSearchCV for Ridge alpha, Lasso alpha, SVR C/epsilon, SVM C/kernel</td><td>trainer.py</td></tr>
+          <tr><td>Cross-Validation</td><td>TimeSeriesSplit(n_splits=5) on all models</td><td>trainer.py / Model Comparison page</td></tr>
+          <tr><td>Simple Linear Regression</td><td>Implemented with single feature (rolling_7_mean)</td><td>trainer.py</td></tr>
+          <tr><td>Multiple Linear Regression</td><td>All 8 time features used</td><td>trainer.py</td></tr>
+          <tr><td>Polynomial Regression</td><td>Degree 2 and 3 via PolynomialFeatures pipeline</td><td>trainer.py</td></tr>
+          <tr><td>Ridge Regression</td><td>Full Pipeline with GridSearchCV</td><td>trainer.py</td></tr>
+          <tr><td>Lasso Regression</td><td>Full Pipeline with GridSearchCV</td><td>trainer.py</td></tr>
+          <tr><td>SVM Hyperplane / Margin</td><td>Explained on this page + SVC used for classification</td><td>trainer.py / Concepts page</td></tr>
+          <tr><td>Soft Margin / Slack Variables</td><td>C parameter tuned, slack concept explained</td><td>Concepts page / trainer.py</td></tr>
+          <tr><td>SVM Classification</td><td>SVC with GridSearchCV; 77.1% accuracy</td><td>Demand Classification page</td></tr>
+          <tr><td>SVR</td><td>Best regression model; MAE=2.59</td><td>trainer.py / Model Comparison</td></tr>
+          <tr><td>Model Evaluation Metrics</td><td>MAE, RMSE, R², accuracy, precision, recall, F1, confusion matrix</td><td>evaluator.py / all ML pages</td></tr>
+          <tr><td>Data Leakage Prevention</td><td>Revenue/price excluded from features; time-based split; Pipeline</td><td>features.py / trainer.py</td></tr>
+          <tr><td>Feature Engineering</td><td>lag_1, lag_7, rolling_7_mean, day_of_week, is_weekend, etc.</td><td>features.py</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /tab-content -->
+{% endblock %}

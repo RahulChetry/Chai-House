@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Daily Report – Chai House AI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-calendar-day me-2 text-warning"></i>Daily Report — {{ report.date }}</h2>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back to Reports</a>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3">
+    <div class="card p-3 text-center">
+      <div class="text-muted small">Revenue</div>
+      <div class="fs-3 fw-bold text-success">₹{{ "%.2f"|format(report.revenue) }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card p-3 text-center">
+      <div class="text-muted small">Cups Sold</div>
+      <div class="fs-3 fw-bold text-primary">{{ report.cups }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card p-3 text-center">
+      <div class="text-muted small">Gross Profit</div>
+      <div class="fs-3 fw-bold text-info">₹{{ "%.2f"|format(report.profit) }}</div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-3">
+    <div class="card p-3 text-center">
+      <div class="text-muted small">Transactions</div>
+      <div class="fs-3 fw-bold text-secondary">{{ report.transactions }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h5 class="mb-3">Product Breakdown</h5>
+    {% if report.by_product %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Product</th><th>Cups</th><th>Revenue (₹)</th><th>Profit (₹)</th><th>Transactions</th></tr></thead>
+        <tbody>
+        {% for p in report.by_product %}
+        <tr>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.cups }}</td>
+          <td>{{ "%.2f"|format(p.revenue) }}</td>
+          <td class="{% if p.profit >= 0 %}text-success{% else %}text-danger{% endif %}">{{ "%.2f"|format(p.profit) }}</td>
+          <td>{{ p.transactions }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+      <p class="text-muted">No sales recorded for this date.</p>
+      <a href="{{ url_for('sales.add_sale') }}" class="btn btn-warning btn-sm">Add Sale</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

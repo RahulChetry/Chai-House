@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.pyc
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Flask / SQLite (keep models + data but not the db — Render uses fresh db)
+instance/chai_house.db
+*.db-journal
+
+# Test cache
+.pytest_cache/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+
+# Compiled models (too large for git — will retrain on server)
+models/*.pkl
+models/*.joblib
+
+# Scratch
+healthcheck.py
+check_urls.py

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Demand Prediction – Chai House AI{% endblock %}
+{% block content %}
+<h2 class="mb-1"><i class="bi bi-magic me-2 text-warning"></i>ML Demand Prediction</h2>
+<p class="text-muted mb-4">Use trained machine learning models to forecast future tea demand.</p>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card p-4">
+      <h5 class="mb-3"><i class="bi bi-sliders me-2"></i>Forecast Settings</h5>
+      {% if not model_available %}
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>No trained model found.</strong> Please train the ML models first.
+        <a href="{{ url_for('ml_comparison.comparison_dashboard') }}" class="btn btn-warning btn-sm mt-2 d-block">
+          <i class="bi bi-cpu me-1"></i>Go Train Models
+        </a>
+      </div>
+      {% endif %}
+      <form method="POST" action="{{ url_for('ml_prediction.predict_form') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Product</label>
+          <select name="product_id" class="form-select" required>
+            <option value="">Select a product…</option>
+            {% for p in products %}
+            <option value="{{ p.id }}" {% if selected_product == p.id %}selected{% endif %}>{{ p.name }} — ₹{{ p.selling_price }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Forecast Date</label>
+          <input type="date" name="forecast_date" class="form-control" value="{{ selected_date }}" required min="{{ today }}">
+        </div>
+        <button type="submit" class="btn btn-warning w-100" {% if not model_available %}disabled{% endif %}>
+          <i class="bi bi-magic me-2"></i>Predict Demand
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    {% if prediction %}
+    <div class="card p-4 border-start border-4 border-warning">
+      <h5 class="mb-3"><i class="bi bi-graph-up-arrow me-2 text-warning"></i>Prediction Results</h5>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <div class="bg-warning bg-opacity-10 rounded p-3 text-center">
+            <div class="text-muted small">Predicted Cups</div>
+            <div class="display-5 fw-bold text-warning">{{ prediction.predicted_cups }}</div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+            <div class="text-muted small">Expected Revenue</div>
+            <div class="display-5 fw-bold text-success">₹{{ prediction.expected_revenue }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <span class="badge bg-secondary me-2"><i class="bi bi-cpu me-1"></i>{{ prediction.model_name }}</span>
+        <span class="badge bg-light text-dark border">{{ prediction.forecast_date }}</span>
+      </div>
+
+      {% if prediction.ingredient_requirements %}
+      <h6 class="mt-3 mb-2"><i class="bi bi-boxes me-1"></i>Estimated Ingredients Needed</h6>
+      <table class="table table-sm table-bordered">
+        <thead class="table-light"><tr><th>Ingredient</th><th>Amount Needed</th></tr></thead>
+        <tbody>
+        {% for ing, qty in prediction.ingredient_requirements.items() %}
+        <tr><td>{{ ing }}</td><td>{{ qty }}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
+      <div class="alert alert-info mt-3 mb-0 small">
+        <i class="bi bi-info-circle me-1"></i>
+        <strong>Note:</strong> This forecast is an estimate based on historical patterns. Actual demand may vary due to weather, holidays, or other factors not captured in the model.
+        {% if prediction.warning_message %}<br><em>{{ prediction.warning_message }}</em>{% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="card p-4 text-center text-muted h-100 d-flex align-items-center justify-content-center">
+      <div>
+        <div style="font-size:4rem">🔮</div>
+        <h5 class="mt-3">Enter details and click "Predict Demand"</h5>
+        <p class="small">The AI will forecast how many cups you'll sell on your chosen date.</p>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

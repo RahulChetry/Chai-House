@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if action == 'edit' else 'Add' }} Sale – Chai House AI{% endblock %}
+{% block content %}
+<h2 class="mb-4">{{ 'Edit' if action == 'edit' else 'New' }} Sale</h2>
+<div class="card p-4" style="max-width:600px">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="mb-3">
+            <label class="form-label">Product *</label>
+            <select name="product_id" class="form-select" required id="productSelect">
+                <option value="">Select product…</option>
+                {% for p in products %}
+                <option value="{{ p.id }}"
+                    data-price="{{ p.selling_price }}" data-cost="{{ p.cost_price }}"
+                    {% if (form_data.get('product_id') and form_data.get('product_id')|int == p.id) or (action == 'edit' and sale.product_id == p.id) %}selected{% endif %}>
+                    {{ p.name }} (₹{{ p.selling_price }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Date *</label>
+            <input type="date" name="date" class="form-control" required
+                value="{{ form_data.get('date') or (sale.date|string if action == 'edit' else '') }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Quantity (cups) *</label>
+            <input type="number" name="quantity" class="form-control" min="1" required
+                value="{{ form_data.get('quantity') or (sale.quantity if action == 'edit' else '') }}">
+        </div>
+        <div class="row g-2 mb-3">
+            <div class="col">
+                <label class="form-label">Unit Price (₹) *</label>
+                <input type="number" name="unit_price" id="unit_price" class="form-control" step="0.01" min="0.01" required
+                    value="{{ form_data.get('unit_price') or (sale.unit_price if action == 'edit' else '') }}">
+            </div>
+            <div class="col">
+                <label class="form-label">Unit Cost (₹) *</label>
+                <input type="number" name="unit_cost" id="unit_cost" class="form-control" step="0.01" min="0" required
+                    value="{{ form_data.get('unit_cost') or (sale.unit_cost if action == 'edit' else '') }}">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <input type="text" name="notes" class="form-control"
+                value="{{ form_data.get('notes') or (sale.notes or '' if action == 'edit' else '') }}">
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">{{ 'Update Sale' if action == 'edit' else 'Add Sale' }}</button>
+            <a href="{{ url_for('sales.list_sales') }}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('productSelect').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    if (opt.dataset.price) document.getElementById('unit_price').value = opt.dataset.price;
+    if (opt.dataset.cost) document.getElementById('unit_cost').value = opt.dataset.cost;
+});
+</script>
+{% endblock %}

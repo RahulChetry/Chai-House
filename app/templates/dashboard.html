@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard – Chai House AI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-speedometer2 me-2 text-warning"></i>Dashboard</h2>
+    {% if not has_data %}
+    <button class="btn btn-warning" id="loadDemoBtn"><i class="bi bi-cloud-download me-1"></i>Load Demo Data</button>
+    {% endif %}
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Today's Revenue</div>
+            <div class="fs-3 fw-bold text-success">₹{{ "%.2f"|format(today_revenue) }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Cups Sold Today</div>
+            <div class="fs-3 fw-bold text-primary">{{ today_cups }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Today's Profit</div>
+            <div class="fs-3 fw-bold text-info">₹{{ "%.2f"|format(today_profit) }}</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card p-3 text-center">
+            <div class="text-muted small">Transactions</div>
+            <div class="fs-3 fw-bold text-secondary">{{ total_transactions }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card p-3">
+            <h6 class="mb-3">Revenue Trend (Last 30 Days)</h6>
+            <canvas id="trendChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card p-3">
+            <h6 class="mb-3">Revenue by Product</h6>
+            <canvas id="productChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <!-- Best Seller -->
+    <div class="col-md-4">
+        <div class="card p-3 h-100">
+            <h6><i class="bi bi-trophy-fill text-warning me-1"></i>Best Seller</h6>
+            <div class="fs-5 fw-semibold mt-2">{{ best_selling_product.name }}</div>
+            <div class="text-muted">{{ best_selling_product.total_cups }} cups total</div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <div class="col-md-8">
+        <div class="card p-3 h-100">
+            <h6><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i>Low Stock Alerts</h6>
+            {% if low_stock_ingredients %}
+            <ul class="list-group list-group-flush mt-2">
+                {% for ing in low_stock_ingredients %}
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-1 bg-transparent">
+                    {{ ing.name }}
+                    <span class="badge bg-danger">{{ ing.quantity_on_hand }} {{ ing.unit }} left</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted mt-2 mb-0"><i class="bi bi-check-circle text-success me-1"></i>All stock levels are healthy.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Next Day Forecast -->
+{% if next_day_forecast %}
+<div class="card p-3 mb-4 border-start border-4 border-primary">
+    <h6><i class="bi bi-magic me-1 text-primary"></i>Next Day Forecast — {{ next_day_forecast.forecast_date }}</h6>
+    <p class="text-muted small mb-2">Model: <code>{{ next_day_forecast.model_name }}</code></p>
+    <div class="row g-2">
+        <div class="col-auto"><span class="badge bg-primary fs-6">{{ next_day_forecast.total_predicted_cups }} cups</span></div>
+        <div class="col-auto"><span class="badge bg-success fs-6">₹{{ next_day_forecast.total_expected_revenue }}</span></div>
+    </div>
+    <ul class="mt-2 mb-0">
+        {% for f in next_day_forecast.by_product %}
+        <li>{{ f.product_name }}: <strong>{{ f.predicted_cups }} cups</strong> → ₹{{ f.expected_revenue }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Recent Transactions -->
+<div class="card p-3">
+    <h6 class="mb-3"><i class="bi bi-clock-history me-1"></i>Recent Transactions</h6>
+    {% if recent_transactions %}
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light"><tr>
+                <th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th><th>Profit</th>
+            </tr></thead>
+            <tbody>
+            {% for t in recent_transactions %}
+            <tr>
+                <td>{{ t.date }}</td>
+                <td>{{ t.product_name }}</td>
+                <td>{{ t.quantity }}</td>
+                <td>₹{{ "%.2f"|format(t.revenue) }}</td>
+                <td class="{% if t.gross_profit >= 0 %}text-success{% else %}text-danger{% endif %}">₹{{ "%.2f"|format(t.gross_profit) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted mb-0">No transactions yet. <a href="{{ url_for('sales.add_sale') }}">Add a sale</a> or load demo data.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const trendRaw = {{ sales_trend_data | safe }};
+const productRaw = {{ revenue_by_product | safe }};
+
+// Trend Chart
+new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+        labels: trendRaw.map(r => r.date),
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: trendRaw.map(r => r.revenue),
+            borderColor: '#6F4E37',
+            backgroundColor: 'rgba(111,78,55,.1)',
+            fill: true, tension: 0.3, pointRadius: 2,
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+// Product Doughnut
+new Chart(document.getElementById('productChart'), {
+    type: 'doughnut',
+    data: {
+        labels: productRaw.map(r => r.product_name),
+        datasets: [{ data: productRaw.map(r => r.revenue),
+            backgroundColor: ['#6F4E37','#C8A96E','#a0522d','#deb887','#8b6914'] }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Load demo data button
+const btn = document.getElementById('loadDemoBtn');
+if (btn) {
+    btn.addEventListener('click', function() {
+        btn.disabled = true;
+        btn.textContent = 'Loading…';
+        fetch('{{ url_for("dashboard.load_demo") }}', {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token() }}' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) { location.reload(); }
+            else { alert('Error: ' + data.message); btn.disabled = false; }
+        });
+    });
+}
+</script>
+{% endblock %}

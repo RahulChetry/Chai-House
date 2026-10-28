@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Monthly Report – Chai House AI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="bi bi-calendar-month me-2 text-success"></i>Monthly Report — {{ report.month_name }}</h2>
+  <a href="{{ url_for('reports.index') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Total Revenue</div><div class="fs-3 fw-bold text-success">₹{{ "%.2f"|format(report.revenue) }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Cups Sold</div><div class="fs-3 fw-bold text-primary">{{ report.cups }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Gross Profit</div><div class="fs-3 fw-bold text-info">₹{{ "%.2f"|format(report.profit) }}</div></div></div>
+  <div class="col-sm-6 col-lg-3"><div class="card p-3 text-center"><div class="text-muted small">Transactions</div><div class="fs-3 fw-bold text-secondary">{{ report.transactions }}</div></div></div>
+</div>
+<div class="card p-3 mb-4">
+  <h6 class="mb-3">Daily Revenue — {{ report.month_name }}</h6>
+  <canvas id="monthlyChart" height="100"></canvas>
+</div>
+<div class="card p-3">
+  <h6 class="mb-3">Product Performance</h6>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="table-light"><tr><th>Product</th><th>Cups Sold</th><th>Revenue (₹)</th><th>Share %</th></tr></thead>
+      <tbody>
+      {% for p in report.by_product %}
+      <tr>
+        <td><strong>{{ p.product_name }}</strong></td>
+        <td>{{ p.cups }}</td>
+        <td>{{ "%.2f"|format(p.revenue) }}</td>
+        <td>
+          {% if report.revenue > 0 %}
+          <div class="progress" style="height:10px"><div class="progress-bar bg-success" style="width:{{ (p.revenue / report.revenue * 100)|round(0) }}%"></div></div>
+          {{ (p.revenue / report.revenue * 100)|round(1) }}%
+          {% else %}—{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const monthly = {{ report.daily_breakdown | tojson | safe }};
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: monthly.map(d => d.date),
+    datasets: [{ label: 'Revenue (₹)', data: monthly.map(d => d.revenue), backgroundColor: '#6F4E37', borderRadius: 3 }]
+  },
+  options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+</script>
+{% endblock %}

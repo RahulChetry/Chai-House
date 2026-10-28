@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}ML Model Comparison – Chai House AI{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h2><i class="bi bi-graph-up-arrow me-2 text-warning"></i>ML Model Comparison</h2>
+  <div>
+    <a href="{{ url_for('ml_comparison.classify') }}" class="btn btn-outline-primary btn-sm me-2">
+      <i class="bi bi-tags me-1"></i>Classify Demand
+    </a>
+    <button class="btn btn-warning btn-sm" id="trainBtn" onclick="trainModels()">
+      <i class="bi bi-cpu me-1"></i>Train All Models
+    </button>
+  </div>
+</div>
+<p class="text-muted mb-4">Compare 6 regression models + SVM classifier. All models evaluated on held-out test data (no data leakage).</p>
+
+{% if not has_results %}
+<div class="card p-5 text-center">
+  <div style="font-size:4rem">🤖</div>
+  <h4 class="mt-3">No Models Trained Yet</h4>
+  <p class="text-muted">Click "Train All Models" to run the full ML pipeline on your sales data.<br>Training uses 450 sales records with chronological train/test split.</p>
+  <button class="btn btn-warning btn-lg mt-2" onclick="trainModels()">
+    <i class="bi bi-cpu me-2"></i>Train All Models Now
+  </button>
+  <div id="trainProgress" class="mt-3 d-none">
+    <div class="spinner-border text-warning me-2" role="status"></div>
+    <span>Training models… this takes 30–60 seconds…</span>
+  </div>
+</div>
+{% else %}
+
+<!-- Regression Section -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3"><i class="bi bi-bar-chart me-2 text-warning"></i>Regression Model Comparison</h5>
+    <div class="row g-3 mb-4">
+      <div class="col-lg-8">
+        <canvas id="regressionChart" height="140"></canvas>
+      </div>
+      <div class="col-lg-4">
+        <div class="card bg-warning bg-opacity-10 p-3">
+          <h6><i class="bi bi-trophy-fill text-warning me-1"></i>Best Model</h6>
+          <div class="fs-5 fw-bold">{{ best_model }}</div>
+          <div class="text-muted small mt-1">MAE: {{ "%.2f"|format(best_mae) }} cups</div>
+          <div class="text-muted small">R²: {{ "%.3f"|format(best_r2) }}</div>
+          <hr class="my-2">
+          <div class="small text-muted">{{ interpretation }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle table-sm">
+        <thead class="table-light">
+          <tr>
+            <th>Model</th><th>Train MAE</th><th>Test MAE</th><th>Test RMSE</th>
+            <th>Test R²</th><th>CV Mean ± Std</th><th>Best Params</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for r in regression_results %}
+        <tr class="{% if r.is_best %}table-warning fw-semibold{% endif %}">
+          <td>
+            {% if r.is_best %}<i class="bi bi-trophy-fill text-warning me-1"></i>{% endif %}
+            {{ r.model_name }}
+          </td>
+          <td>{{ "%.2f"|format(r.train_mae) }}</td>
+          <td>{{ "%.2f"|format(r.test_mae) }}</td>
+          <td>{{ "%.2f"|format(r.test_rmse) }}</td>
+          <td>{{ "%.3f"|format(r.test_r2) }}</td>
+          <td>{{ "%.2f"|format(r.cv_mean) }} ± {{ "%.2f"|format(r.cv_std) }}</td>
+          <td><small class="text-muted">{{ r.best_params or '—' }}</small></td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Classification Section -->
+{% if classification_result %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="mb-3"><i class="bi bi-tags me-2 text-primary"></i>SVM Demand Classifier</h5>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="row g-2">
+          <div class="col-6"><div class="border rounded p-2 text-center"><small class="text-muted">Accuracy</small><div class="fw-bold fs-5">{{ (classification_result.accuracy * 100)|round(1) }}%</div></div></div>
+          <div class="col-6"><div class="border rounded p-2 text-center"><small class="text-muted">F1 Score</small><div class="fw-bold fs-5">{{ (classification_result.f1 * 100)|round(1) }}%</div></div></div>
+          <div class="col-6"><div class="border rounded p-2 text-center"><small class="text-muted">Precision</small><div class="fw-bold fs-5">{{ (classification_result.precision * 100)|round(1) }}%</div></div></div>
+          <div class="col-6"><div class="border rounded p-2 text-center"><small class="text-muted">Recall</small><div class="fw-bold fs-5">{{ (classification_result.recall * 100)|round(1) }}%</div></div></div>
+        </div>
+        <div class="mt-2 small text-muted">
+          Best params: <code>{{ classification_result.best_params }}</code><br>
+          CV Accuracy: {{ "%.3f"|format(classification_result.cv_mean) }} ± {{ "%.3f"|format(classification_result.cv_std) }}<br>
+          Train: {{ classification_result.n_train }} | Test: {{ classification_result.n_test }}
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h6 class="mb-2">Confusion Matrix</h6>
+        <table class="table table-bordered table-sm text-center" style="max-width:300px">
+          <thead class="table-light"><tr><th></th><th>Pred Low</th><th>Pred Med</th><th>Pred High</th></tr></thead>
+          <tbody>
+          {% if classification_result.confusion_matrix %}
+          {% for row in classification_result.confusion_matrix %}
+          {% set i = loop.index0 %}
+          <tr>
+            <th class="table-light">{% if i==0 %}Act Low{% elif i==1 %}Act Med{% else %}Act High{% endif %}</th>
+            {% for val in row %}
+            <td class="{% if loop.index0 == i %}bg-success bg-opacity-25 fw-bold{% endif %}">{{ val }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          {% endif %}
+          </tbody>
+        </table>
+        {% if classification_result.class_thresholds %}
+        <div class="small text-muted mt-1">
+          Low ≤ {{ classification_result.class_thresholds.low_threshold }} | 
+          Medium {{ classification_result.class_thresholds.low_threshold }}–{{ classification_result.class_thresholds.high_threshold }} | 
+          High > {{ classification_result.class_thresholds.high_threshold }} cups
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% if class_interpretation %}
+    <div class="alert alert-light mt-3 mb-0 small"><i class="bi bi-chat-text me-1"></i>{{ class_interpretation }}</div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h6><i class="bi bi-info-circle me-2 text-primary"></i>About This Evaluation</h6>
+    <ul class="small text-muted mb-0">
+      <li><strong>Train/Test split:</strong> 80% training, 20% test — split chronologically (no data leakage).</li>
+      <li><strong>Cross-validation:</strong> TimeSeriesSplit(n_splits=5) — respects time order.</li>
+      <li><strong>Best model selection:</strong> Lowest test MAE on held-out data.</li>
+      <li><strong>Features used:</strong> day_of_week, is_weekend, month, day_of_month, week_of_year, lag_1, lag_7, rolling_7_mean. Revenue/cost excluded to prevent leakage.</li>
+      <li><strong>Training records:</strong> {{ n_train }} | <strong>Test records:</strong> {{ n_test }}</li>
+    </ul>
+  </div>
+</div>
+
+{% endif %}
+
+<div id="trainProgress" class="mt-3 d-none text-center">
+  <div class="spinner-border text-warning me-2" role="status"></div>
+  <span>Training models… this takes 30–60 seconds…</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+{% if has_results %}
+const regResults = {{ regression_results | tojson | safe }};
+new Chart(document.getElementById('regressionChart'), {
+  type: 'bar',
+  data: {
+    labels: regResults.map(r => r.model_name),
+    datasets: [
+      { label: 'Test MAE', data: regResults.map(r => r.test_mae), backgroundColor: '#C8A96E', borderRadius: 4 },
+      { label: 'Train MAE', data: regResults.map(r => r.train_mae), backgroundColor: 'rgba(111,78,55,0.4)', borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(2) + ' cups' } } },
+    scales: { y: { beginAtZero: true, title: { display: true, text: 'MAE (cups)' } } }
+  }
+});
+{% endif %}
+
+function trainModels() {
+  const btn = document.getElementById('trainBtn');
+  const prog = document.getElementById('trainProgress');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Training…';
+  prog.classList.remove('d-none');
+
+  fetch('{{ url_for("ml_comparison.train_models") }}', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      alert('Training complete!\n' + (data.message || ''));
+      location.reload();
+    } else {
+      alert('Training failed: ' + (data.message || 'Unknown error'));
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-cpu me-1"></i>Train All Models';
+      prog.classList.add('d-none');
+    }
+  })
+  .catch(err => {
+    alert('Error: ' + err);
+    btn.disabled = false;
+    prog.classList.add('d-none');
+  });
+}
+</script>
+{% endblock %}

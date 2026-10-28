@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}Reports – Chai House AI{% endblock %}
+{% block content %}
+<h2 class="mb-4"><i class="bi bi-bar-chart-line me-2 text-warning"></i>Reports & Analytics</h2>
+<div class="row g-4">
+
+  <!-- Daily Report -->
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <div class="text-center mb-3"><i class="bi bi-calendar-day text-warning" style="font-size:2.5rem"></i></div>
+      <h5 class="card-title text-center">Daily Report</h5>
+      <p class="text-muted text-center small">View revenue, cups sold and product breakdown for a specific day.</p>
+      <form action="{{ url_for('reports.daily_report') }}" method="GET" class="mt-auto">
+        <input type="date" name="date" value="{{ today }}" class="form-control mb-2">
+        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-eye me-1"></i>View Daily Report</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Weekly Report -->
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <div class="text-center mb-3"><i class="bi bi-calendar-week text-primary" style="font-size:2.5rem"></i></div>
+      <h5 class="card-title text-center">Weekly Report</h5>
+      <p class="text-muted text-center small">7-day breakdown with daily trends and product comparisons.</p>
+      <form action="{{ url_for('reports.weekly_report') }}" method="GET" class="mt-auto">
+        <label class="form-label small fw-semibold">Week starting from:</label>
+        <input type="date" name="start" value="{{ today }}" class="form-control mb-2">
+        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-eye me-1"></i>View Weekly Report</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Monthly Report -->
+  <div class="col-md-4">
+    <div class="card h-100 p-4">
+      <div class="text-center mb-3"><i class="bi bi-calendar-month text-success" style="font-size:2.5rem"></i></div>
+      <h5 class="card-title text-center">Monthly Report</h5>
+      <p class="text-muted text-center small">Full month summary with product performance and profit analysis.</p>
+      <form action="{{ url_for('reports.monthly_report') }}" method="GET" class="mt-auto">
+        <div class="row g-1 mb-2">
+          <div class="col-6"><select name="year" class="form-select">
+            {% for y in range(2024, 2028) %}<option {% if y == current_year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+          </select></div>
+          <div class="col-6"><select name="month" class="form-select">
+            {% for m, mn in months %}<option value="{{ m }}" {% if m == current_month %}selected{% endif %}>{{ mn }}</option>{% endfor %}
+          </select></div>
+        </div>
+        <button type="submit" class="btn btn-success w-100"><i class="bi bi-eye me-1"></i>View Monthly Report</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Export Section -->
+<div class="card mt-4 p-4">
+  <h5 class="mb-3"><i class="bi bi-download me-2 text-secondary"></i>Export Data</h5>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="border rounded p-3 text-center">
+        <i class="bi bi-file-earmark-spreadsheet text-success" style="font-size:2rem"></i>
+        <p class="mb-2 mt-1 fw-semibold">All Sales Records</p>
+        <p class="text-muted small mb-3">Complete sales history as CSV file</p>
+        <a href="{{ url_for('reports.export_sales_csv') }}" class="btn btn-success w-100">
+          <i class="bi bi-download me-1"></i>Download Sales CSV
+        </a>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="border rounded p-3 text-center">
+        <i class="bi bi-file-earmark-bar-graph text-primary" style="font-size:2rem"></i>
+        <p class="mb-2 mt-1 fw-semibold">Product Summary</p>
+        <p class="text-muted small mb-3">Product-wise revenue and performance</p>
+        <a href="{{ url_for('reports.export_products_csv') }}" class="btn btn-primary w-100">
+          <i class="bi bi-download me-1"></i>Download Products CSV
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

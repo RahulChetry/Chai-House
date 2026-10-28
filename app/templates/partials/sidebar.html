@@ -1,0 +1,68 @@
+<nav class="sidebar d-flex flex-column" id="sidebar">
+  <a class="brand text-decoration-none" href="{{ url_for('dashboard.index') }}">
+    <i class="bi bi-cup-hot-fill me-2"></i>Chai House AI
+  </a>
+  <p class="text-center small opacity-50 px-3 mb-2" style="color:#e8d5b7;font-size:.7rem">Har Sip Mein Ghar Ka Ehsaas</p>
+  <ul class="nav flex-column mt-1 flex-grow-1">
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}"
+         href="{{ url_for('dashboard.index') }}">
+        <i class="bi bi-speedometer2 me-2"></i>Dashboard
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint and 'sales' in request.endpoint %}active{% endif %}"
+         href="{{ url_for('sales.list_sales') }}">
+        <i class="bi bi-cart3 me-2"></i>Sales Management
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint and 'products' in request.endpoint %}active{% endif %}"
+         href="{{ url_for('products.list_products') }}">
+        <i class="bi bi-box-seam me-2"></i>Products
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint and 'inventory' in request.endpoint %}active{% endif %}"
+         href="{{ url_for('inventory.list_inventory') }}">
+        <i class="bi bi-archive me-2"></i>Inventory
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint and 'reports' in request.endpoint %}active{% endif %}"
+         href="{{ url_for('reports.index') }}">
+        <i class="bi bi-bar-chart-line me-2"></i>Reports
+      </a>
+    </li>
+    <li class="nav-item mt-2">
+      <small class="text-warning px-3 d-block mb-1 opacity-75" style="font-size:.7rem;letter-spacing:.05em">ML & AI</small>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'ml_prediction.predict_form' %}active{% endif %}"
+         href="{{ url_for('ml_prediction.predict_form') }}">
+        <i class="bi bi-magic me-2"></i>Demand Prediction
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'ml_comparison.classify' %}active{% endif %}"
+         href="{{ url_for('ml_comparison.classify') }}">
+        <i class="bi bi-tags me-2"></i>Classify Demand
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'ml_comparison.comparison_dashboard' %}active{% endif %}"
+         href="{{ url_for('ml_comparison.comparison_dashboard') }}">
+        <i class="bi bi-graph-up-arrow me-2"></i>Model Comparison
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.endpoint == 'concepts.concepts' %}active{% endif %}"
+         href="{{ url_for('concepts.concepts') }}">
+        <i class="bi bi-book me-2"></i>ML Concepts
+      </a>
+    </li>
+  </ul>
+  <div class="px-3 py-2 mt-auto" style="border-top:1px solid rgba(255,255,255,.1);color:#e8d5b7;font-size:.8rem">
+    <i class="bi bi-person-circle me-1"></i>Chai House Owner
+  </div>
+</nav>
